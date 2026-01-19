@@ -5,10 +5,10 @@ import torch.nn as nn
 import einops
 from einops.layers.torch import Rearrange
 
-from canonical_policy.model.diffusion.conv1d_components import Downsample1d, Upsample1d, Conv1dBlock
-from canonical_policy.model.diffusion.positional_embedding import SinusoidalPosEmb
+from model.diffusion.conv1d_components import Downsample1d, Upsample1d, Conv1dBlock
+from model.diffusion.positional_embedding import SinusoidalPosEmb
 from pytorch3d.transforms import quaternion_apply, quaternion_invert, quaternion_multiply
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
+from model.common.rotation_transformer import RotationTransformer
 
 logger = logging.getLogger(__name__)
 

@@ -9,12 +9,12 @@ import copy
 import time
 import pytorch3d.ops as torch3d_ops
 
-from canonical_policy.model.common.normalizer import LinearNormalizer
-from canonical_policy.model.diffusion.canonical_conditional_unet1d import CanonicalConditionalUnet1D
-from canonical_policy.model.diffusion.mask_generator import LowdimMaskGenerator
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.model.vision.canonical_extractor import CanonicalEncoder
-from canonical_policy.policy.base_image_policy import BaseImagePolicy
+from model.common.normalizer import LinearNormalizer
+from model.diffusion.canonical_conditional_unet1d import CanonicalConditionalUnet1D
+from model.diffusion.mask_generator import LowdimMaskGenerator
+from common.pytorch_util import dict_apply
+from model.vision.canonical_extractor import CanonicalEncoder
+from policy.base_image_policy import BaseImagePolicy
 
 # Flow Matching
 try:

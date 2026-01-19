@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from pytorch3d.ops.knn import knn_points
 import logging
 
-from canonical_policy.model.vision.canonical_utils.vec_layers import VecLinear
-from canonical_policy.model.vision.canonical_utils.vec_layers import VecLinNormAct as VecLNA
+from model.vision.canonical_utils.vec_layers import VecLinear
+from model.vision.canonical_utils.vec_layers import VecLinNormAct as VecLNA
 
 def meanpool(x, dim=-1, keepdim=False):
     out = x.mean(dim=dim, keepdim=keepdim)

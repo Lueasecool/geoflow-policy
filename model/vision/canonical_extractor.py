@@ -9,9 +9,9 @@ from termcolor import cprint
 from einops import rearrange
 from pytorch3d.ops import sample_farthest_points
 from pytorch3d.transforms import quaternion_apply, quaternion_invert, quaternion_multiply, matrix_to_quaternion
-from canonical_policy.model.vision.canonical_utils.vec_pointnet import VecPointNet, VN_Regressor
-from canonical_policy.model.vision.canonical_utils.agg_encoder import AggEncoder
-from canonical_policy.model.vision.canonical_utils.utils import construct_rotation_matrix, extract_z_rotation
+from model.vision.canonical_utils.vec_pointnet import VecPointNet, VN_Regressor
+from model.vision.canonical_utils.agg_encoder import AggEncoder
+from model.vision.canonical_utils.utils import construct_rotation_matrix, extract_z_rotation
     
 def create_mlp(
         input_dim: int,

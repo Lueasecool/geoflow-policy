@@ -1,7 +1,7 @@
 from typing import Sequence, Optional
 import torch
 from torch import nn
-from canonical_policy.model.common.module_attr_mixin import ModuleAttrMixin
+from model.common.module_attr_mixin import ModuleAttrMixin
 
 
 def get_intersection_slice_mask(

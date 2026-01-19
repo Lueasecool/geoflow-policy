@@ -24,13 +24,13 @@ import shutil
 import time
 import threading
 from hydra.core.hydra_config import HydraConfig
-from canonical_policy.policy.base_image_policy import BaseImagePolicy
-from canonical_policy.dataset.base_dataset import BaseImageDataset
-from canonical_policy.env_runner.base_image_runner import BaseImageRunner
-from canonical_policy.common.checkpoint_util import TopKCheckpointManager
-from canonical_policy.common.pytorch_util import dict_apply, optimizer_to
-from canonical_policy.model.diffusion.ema_model import EMAModel
-from canonical_policy.model.common.lr_scheduler import get_scheduler
+from policy.base_image_policy import BaseImagePolicy
+from dataset.base_dataset import BaseImageDataset
+from env_runner.base_image_runner import BaseImageRunner
+from common.checkpoint_util import TopKCheckpointManager
+from common.pytorch_util import dict_apply, optimizer_to
+from model.diffusion.ema_model import EMAModel
+from model.common.lr_scheduler import get_scheduler
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
@@ -537,8 +537,7 @@ class TrainCurveFlowCanonicalWorkspace:
 
 @hydra.main(
     version_base=None,
-    config_path=str(pathlib.Path(__file__).parent.joinpath(
-        'canonical_policy', 'config'))
+    config_path=str(pathlib.Path(__file__).parent.parent.joinpath('config'))
 )
 def main(cfg):
     workspace = TrainCurveFlowCanonicalWorkspace(cfg)

@@ -1,5 +1,5 @@
-from canonical_policy.model.common.normalizer import SingleFieldLinearNormalizer
-from canonical_policy.common.pytorch_util import dict_apply, dict_apply_reduce, dict_apply_split
+from model.common.normalizer import SingleFieldLinearNormalizer
+from common.pytorch_util import dict_apply, dict_apply_reduce, dict_apply_split
 import numpy as np
 
 
