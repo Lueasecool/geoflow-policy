@@ -5,16 +5,16 @@ import torch.nn as nn
 import einops
 from einops.layers.torch import Rearrange
 
-from canonical_policy.model.diffusion.equibot_conv1d_components import (
+from model.diffusion.equibot_conv1d_components import (
     VecDownsample1d,
     VecUpsample1d,
     VecConv1dBlock,
 )
-from canonical_policy.model.diffusion.positional_embedding import SinusoidalPosEmb
-from canonical_policy.model.vision.canonical_utils.vec_layers import VecLinNormAct as VecLNA
-from canonical_policy.model.vision.canonical_utils.vec_layers import VecLinear
+from model.diffusion.positional_embedding import SinusoidalPosEmb
+from model.vision.canonical_utils.vec_layers import VecLinNormAct as VecLNA
+from model.vision.canonical_utils.vec_layers import VecLinear
 from pytorch3d.transforms import axis_angle_to_quaternion, quaternion_to_axis_angle
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
+from model.common.rotation_transformer import RotationTransformer
 
 logger = logging.getLogger(__name__)
 

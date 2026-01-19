@@ -5,8 +5,8 @@ import torch.nn as nn
 import einops
 from einops.layers.torch import Rearrange
 
-from canonical_policy.model.diffusion.conv1d_components import Downsample1d, Upsample1d, Conv1dBlock
-from canonical_policy.model.diffusion.positional_embedding import SinusoidalPosEmb
+from model.diffusion.conv1d_components import Downsample1d, Upsample1d, Conv1dBlock
+from model.diffusion.positional_embedding import SinusoidalPosEmb
 from pytorch3d.transforms import axis_angle_to_matrix, matrix_to_axis_angle, quaternion_to_matrix
 
 logger = logging.getLogger(__name__)

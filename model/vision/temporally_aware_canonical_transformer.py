@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
-from canonical_policy.model.vision.canonical_utils.vec_pointnet import VecPointNet, VN_Regressor
-from canonical_policy.model.vision.canonical_utils.utils import construct_rotation_matrix
+from model.vision.canonical_utils.vec_pointnet import VecPointNet, VN_Regressor
+from model.vision.canonical_utils.utils import construct_rotation_matrix
 
 
 class EquivariantRotationEstimator(nn.Module):

@@ -20,14 +20,14 @@ from threadpoolctl import threadpool_limits
 import concurrent.futures
 import multiprocessing
 from omegaconf import OmegaConf
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.dataset.base_dataset import BaseImageDataset, LinearNormalizer
-from canonical_policy.model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
-from canonical_policy.codecs.imagecodecs_numcodecs import register_codecs, Jpeg2k
-from canonical_policy.common.replay_buffer import ReplayBuffer
-from canonical_policy.common.sampler import SequenceSampler, get_val_mask
-from canonical_policy.common.normalize_util import (
+from common.pytorch_util import dict_apply
+from dataset.base_dataset import BaseImageDataset, LinearNormalizer
+from model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
+from model.common.rotation_transformer import RotationTransformer
+from codecs.imagecodecs_numcodecs import register_codecs, Jpeg2k
+from common.replay_buffer import ReplayBuffer
+from common.sampler import SequenceSampler, get_val_mask
+from common.normalize_util import (
     robomimic_abs_action_only_normalizer_from_stat,
     get_range_normalizer_from_stat,
     get_voxel_identity_normalizer,
@@ -417,7 +417,7 @@ if __name__ == "__main__":
     import yaml
 
     parser = argparse.ArgumentParser(description="Inspect RobomimicReplayPointCloudDataset sample")
-    parser.add_argument("--dataset_path", type=str, default="/home/lyb/Documents/repro/canonical_policy/data/robomimic/datasets/coffee_preparation_d0/coffee_preparation_d0_voxel_abs.hdf5", help="Path to robomimic HDF5 file")
+    parser.add_argument("--dataset_path", type=str, default="./data/robomimic/datasets/coffee_preparation_d0/coffee_preparation_d0_voxel_abs.hdf5", help="Path to robomimic HDF5 file")
     parser.add_argument("--shape_meta", type=str, default=None, help="Path to YAML with shape_meta; if unset, use mimicgen_pc_abs defaults")
     parser.add_argument("--horizon", type=int, default=16)
     parser.add_argument("--n_obs_steps", type=int, default=2)

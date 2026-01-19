@@ -1,7 +1,7 @@
-from canonical_policy.dataset.base_dataset import LinearNormalizer
-from canonical_policy.model.common.normalizer import LinearNormalizer
-from canonical_policy.dataset.robomimic_replay_image_dataset import RobomimicReplayImageDataset, normalizer_from_stat
-from canonical_policy.common.normalize_util import (
+from dataset.base_dataset import LinearNormalizer
+from model.common.normalizer import LinearNormalizer
+from dataset.robomimic_replay_image_dataset import RobomimicReplayImageDataset, normalizer_from_stat
+from common.normalize_util import (
     robomimic_abs_action_only_symmetric_normalizer_from_stat,
     get_range_normalizer_from_stat,
     get_range_symmetric_normalizer_from_stat,

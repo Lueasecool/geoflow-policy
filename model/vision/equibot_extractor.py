@@ -8,8 +8,8 @@ from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
 from einops import rearrange
 from pytorch3d.ops import sample_farthest_points
-from canonical_policy.model.vision.canonical_utils.vec_pointnet import VecPointNet
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
+from model.vision.canonical_utils.vec_pointnet import VecPointNet
+from model.common.rotation_transformer import RotationTransformer
 
 class EquibotEncoder(nn.Module):
     def __init__(self, 

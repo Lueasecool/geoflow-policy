@@ -59,7 +59,7 @@ class TrainCurveFlowCanonicalWorkspace:
             except: # minkowski engine could not be copied. recreate it
                 self.ema_model = hydra.utils.instantiate(cfg.policy)
 
-        # configure training state - 包含所有模型参数（按开关决定是否加入CurveFlow参数）
+        # configure training state - include all model parameters (optionally with CurveFlow parameters)
         print(f"Model type: {type(self.model)}")
         print(f"Has curveflow_model attr: {hasattr(self.model, 'curveflow_model')}")
         print(f"use_curveflow: {getattr(self.model, 'use_curveflow', False)}")
@@ -207,19 +207,19 @@ class TrainCurveFlowCanonicalWorkspace:
                     loss = raw_loss / cfg.training.gradient_accumulate_every
                     loss.backward()
                     
-                    # 计算梯度范数 - 在backward()之后
+                    # compute gradient norm after backward()
                     if self.global_step % 100 == 0:
                         model_norm = 0
                         curveflow_norm = 0
                         
-                        # 主模型梯度
+                        # main model gradients
                         for p in self.model.parameters():
                             if p.grad is not None:
                                 param_norm = p.grad.data.norm(2)
                                 model_norm += param_norm.item() ** 2
                         model_norm = model_norm ** (1. / 2)
                         
-                        # CurveFlow模型梯度
+                        # CurveFlow module gradients
                         if hasattr(self.model, 'curveflow_model') and getattr(self.model, 'use_curveflow', False):
                             for p in self.model.curveflow_model.parameters():
                                 if p.grad is not None:
@@ -230,7 +230,7 @@ class TrainCurveFlowCanonicalWorkspace:
                         total_norm = (model_norm ** 2 + curveflow_norm ** 2) ** (1. / 2)
                         print(f"  Gradient norm - Model: {model_norm:.6f}, CurveFlow: {curveflow_norm:.6f}, Total: {total_norm:.6f}")
                         
-                        # 如果梯度范数过大，进行裁剪
+                        # apply gradient clipping if total norm is too large
                         if total_norm > 10.0:
                             all_params = list(self.model.parameters())
                             if hasattr(self.model, 'curveflow_model') and getattr(self.model, 'use_curveflow', False):

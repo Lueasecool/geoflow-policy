@@ -4,14 +4,14 @@ import numpy as np
 import h5py
 from tqdm import tqdm
 import copy
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.dataset.base_dataset import BaseLowdimDataset, LinearNormalizer
-from canonical_policy.model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
-from canonical_policy.common.replay_buffer import ReplayBuffer
-from canonical_policy.common.sampler import (
+from common.pytorch_util import dict_apply
+from dataset.base_dataset import BaseLowdimDataset, LinearNormalizer
+from model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
+from model.common.rotation_transformer import RotationTransformer
+from common.replay_buffer import ReplayBuffer
+from common.sampler import (
     SequenceSampler, get_val_mask, downsample_mask)
-from canonical_policy.common.normalize_util import (
+from common.normalize_util import (
     robomimic_abs_action_only_normalizer_from_stat,
     robomimic_abs_action_only_dual_arm_normalizer_from_stat,
     get_identity_normalizer_from_stat,

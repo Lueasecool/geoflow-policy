@@ -3,7 +3,7 @@ defaults:
   - task: mimicgen_pc_abs
 
 name: train_canonical
-_target_: canonical_policy.workspace.train_canonical_workspace.TrainCanonicalWorkspace
+_target_: workspace.train_canonical_workspace.TrainCanonicalWorkspace
 
 shape_meta: ${task.shape_meta}
 exp_name: "debug"
@@ -17,11 +17,11 @@ n_latency_steps: 0
 dataset_obs_steps: ${n_obs_steps}
 keypoint_visible_rate: 1.0
 obs_as_global_cond: True
-dataset_target: canonical_policy.dataset.robomimic_replay_point_cloud_dataset.RobomimicReplayPointCloudDataset
+dataset_target: dataset.robomimic_replay_point_cloud_dataset.RobomimicReplayPointCloudDataset
 dataset_path: data/robomimic/datasets/${task_name}/${task_name}_voxel_abs.hdf5
 
 policy:
-  _target_: canonical_policy.policy.diffusion_canonical_unet_policy.DiffusionCanonicalUNetPolicy
+  _target_: policy.diffusion_canonical_unet_policy.DiffusionCanonicalUNetPolicy
   use_point_crop: true
   
   diffusion_step_embed_dim: 128
@@ -65,7 +65,7 @@ policy:
 
 
 ema:
-  _target_: canonical_policy.model.diffusion.ema_model.EMAModel
+  _target_: model.diffusion.ema_model.EMAModel
   update_after_step: 0
   inv_gamma: 1.0
   power: 0.75

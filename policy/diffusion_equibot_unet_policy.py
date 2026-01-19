@@ -9,12 +9,12 @@ from termcolor import cprint
 import copy
 import time
 import pytorch3d.ops as torch3d_ops
-from canonical_policy.policy.base_image_policy import BaseImagePolicy
-from canonical_policy.model.common.normalizer import LinearNormalizer
-from canonical_policy.model.diffusion.equibot_conditional_unet1d import VecConditionalUnet1D
-from canonical_policy.model.diffusion.mask_generator import LowdimMaskGenerator
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.model.vision.equibot_extractor import EquibotEncoder
+from policy.base_image_policy import BaseImagePolicy
+from model.common.normalizer import LinearNormalizer
+from model.diffusion.equibot_conditional_unet1d import VecConditionalUnet1D
+from model.diffusion.mask_generator import LowdimMaskGenerator
+from common.pytorch_util import dict_apply
+from model.vision.equibot_extractor import EquibotEncoder
     
 class Equibot(BaseImagePolicy):
     def __init__(self, 

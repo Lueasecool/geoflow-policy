@@ -8,7 +8,7 @@ import numpy as np
 from einops import rearrange
 import math
 
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
+from model.common.rotation_transformer import RotationTransformer
 
 class RotRandomizer(nn.Module):
     """

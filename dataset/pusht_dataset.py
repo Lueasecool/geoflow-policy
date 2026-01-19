@@ -2,12 +2,12 @@ from typing import Dict
 import torch
 import numpy as np
 import copy
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.common.replay_buffer import ReplayBuffer
-from canonical_policy.common.sampler import (
+from common.pytorch_util import dict_apply
+from common.replay_buffer import ReplayBuffer
+from common.sampler import (
     SequenceSampler, get_val_mask, downsample_mask)
-from canonical_policy.model.common.normalizer import LinearNormalizer
-from canonical_policy.dataset.base_dataset import BaseLowdimDataset
+from model.common.normalizer import LinearNormalizer
+from dataset.base_dataset import BaseLowdimDataset
 
 class PushTLowdimDataset(BaseLowdimDataset):
     def __init__(self, 

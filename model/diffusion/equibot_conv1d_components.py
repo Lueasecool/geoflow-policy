@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from canonical_policy.model.vision.canonical_utils.vec_layers import VecActivation
+from model.vision.canonical_utils.vec_layers import VecActivation
 
 
 class VecDownsample1d(nn.Module):

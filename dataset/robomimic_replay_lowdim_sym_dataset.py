@@ -1,11 +1,11 @@
 from typing import Dict, List
 import torch
 import numpy as np
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.dataset.base_dataset import LinearNormalizer
-from canonical_policy.dataset.robomimic_replay_lowdim_dataset import RobomimicReplayLowdimDataset, normalizer_from_stat
-from canonical_policy.common.normalize_util import robomimic_abs_action_only_symmetric_normalizer_from_stat
-from canonical_policy.common.normalize_util import (
+from common.pytorch_util import dict_apply
+from dataset.base_dataset import LinearNormalizer
+from dataset.robomimic_replay_lowdim_dataset import RobomimicReplayLowdimDataset, normalizer_from_stat
+from common.normalize_util import robomimic_abs_action_only_symmetric_normalizer_from_stat
+from common.normalize_util import (
     robomimic_abs_action_only_symmetric_normalizer_from_stat,
     get_identity_normalizer_from_stat,
     array_to_stats

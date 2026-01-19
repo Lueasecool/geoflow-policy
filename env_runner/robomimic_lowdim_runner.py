@@ -9,16 +9,16 @@ import h5py
 import dill
 import math
 import wandb.sdk.data_types.video as wv
-from canonical_policy.gym_util.async_vector_env import AsyncVectorEnv
-# from canonical_policy.gym_util.sync_vector_env import SyncVectorEnv
-from canonical_policy.gym_util.multistep_wrapper import MultiStepWrapper
-from canonical_policy.gym_util.video_recording_wrapper import VideoRecordingWrapper, VideoRecorder
-from canonical_policy.model.common.rotation_transformer import RotationTransformer
+from gym_util.async_vector_env import AsyncVectorEnv
+# from gym_util.sync_vector_env import SyncVectorEnv
+from gym_util.multistep_wrapper import MultiStepWrapper
+from gym_util.video_recording_wrapper import VideoRecordingWrapper, VideoRecorder
+from model.common.rotation_transformer import RotationTransformer
 
-from canonical_policy.policy.base_lowdim_policy import BaseLowdimPolicy
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.env_runner.base_lowdim_runner import BaseLowdimRunner
-from canonical_policy.env.robomimic.robomimic_lowdim_wrapper import RobomimicLowdimWrapper
+from policy.base_lowdim_policy import BaseLowdimPolicy
+from common.pytorch_util import dict_apply
+from env_runner.base_lowdim_runner import BaseLowdimRunner
+from env.robomimic.robomimic_lowdim_wrapper import RobomimicLowdimWrapper
 import robomimic.utils.file_utils as FileUtils
 import robomimic.utils.env_utils as EnvUtils
 import robomimic.utils.obs_utils as ObsUtils

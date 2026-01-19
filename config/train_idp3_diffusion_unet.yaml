@@ -3,7 +3,7 @@ defaults:
   - task: mimicgen_pc_abs
 
 name: train_idp3
-_target_: canonical_policy.workspace.train_idp3_workspace.TrainIDP3Workspace
+_target_: workspace.train_idp3_workspace.TrainIDP3Workspace
 
 shape_meta: ${task.shape_meta}
 exp_name: "debug"
@@ -17,11 +17,11 @@ n_latency_steps: 0
 dataset_obs_steps: ${n_obs_steps}
 keypoint_visible_rate: 1.0
 obs_as_global_cond: True
-dataset_target: canonical_policy.dataset.robomimic_replay_point_cloud_dataset.RobomimicReplayPointCloudDataset
+dataset_target: dataset.robomimic_replay_point_cloud_dataset.RobomimicReplayPointCloudDataset
 dataset_path: data/robomimic/datasets/${task_name}/${task_name}_voxel_abs.hdf5
 
 policy:
-  _target_: canonical_policy.policy.diffusion_idp3_unet_policy.DP3
+  _target_: policy.diffusion_idp3_unet_policy.DP3
   use_point_crop: true
   condition_type: film
   use_down_condition: true
@@ -63,7 +63,7 @@ policy:
 
 
 ema:
-  _target_: canonical_policy.model.diffusion.ema_model.EMAModel
+  _target_: model.diffusion.ema_model.EMAModel
   update_after_step: 0
   inv_gamma: 1.0
   power: 0.75

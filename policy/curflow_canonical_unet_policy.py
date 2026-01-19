@@ -24,13 +24,13 @@ except Exception as e:
 
 
 class CurveFlowCoefficientNet(nn.Module):
-    """神经网络直接参数化CurveFlow系数"""
+    """Neural network that directly parameterizes CurveFlow coefficients."""
 
     def __init__(self, hidden_dim=64, output_activation="tanh"):
         super().__init__()
         self.output_activation = output_activation
 
-        # 使用更深的网络来直接学习系数函数
+        # deeper MLP to directly learn the coefficient functions
         self.net = nn.Sequential(
             nn.Linear(1, hidden_dim),
             nn.SiLU(),
@@ -55,29 +55,29 @@ class CurveFlowCoefficientNet(nn.Module):
 
 class CurveFlow(nn.Module):
     """
-    实现CurveFlow轨迹 z_t = a_phi(t) * x_0 + b_psi(t) * epsilon。
-    系数 a_phi(t) 和 b_psi(t) 采用线性基线 + 有限幅度的非线性扰动。
+    CurveFlow trajectory: z_t = a_phi(t) * x_0 + b_psi(t) * epsilon.
+    The coefficients a_phi(t) and b_psi(t) are a linear baseline plus bounded nonlinear perturbations.
     """
 
     def __init__(self, hidden_dim=64, delta_scale=0.5):
         super().__init__()
-        # 直接参数化系数函数（tanh输出，零均值对称）
+        # directly parameterize the coefficient functions (tanh output, zero-centered and symmetric)
         self.a_phi_net = CurveFlowCoefficientNet(hidden_dim, output_activation="tanh")
         self.b_psi_net = CurveFlowCoefficientNet(hidden_dim, output_activation="tanh")
         self.delta_scale = delta_scale
 
     def a_phi(self, t):
-        """线性基线(1-t) + 有限幅度扰动 t(1-t)*delta*raw_a"""
+        """Linear baseline (1 - t) plus bounded perturbation t(1 - t)*delta*raw_a."""
         raw_a = self.a_phi_net(t)  # [-1,1]
         return (1 - t) + t * (1 - t) * (self.delta_scale * raw_a)
 
     def b_psi(self, t):
-        """线性基线 t + 有限幅度扰动 t(1-t)*delta*raw_b"""
+        """Linear baseline t plus bounded perturbation t(1 - t)*delta*raw_b."""
         raw_b = self.b_psi_net(t)  # [-1,1]
         return t + t * (1 - t) * (self.delta_scale * raw_b)
 
     def forward(self, t):
-        """计算给定时间t的两个系数"""
+        """Compute both coefficients for a given time t."""
         return self.a_phi(t), self.b_psi(t)
 
 
@@ -118,7 +118,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             **kwargs):
         super().__init__()
         
-        # 初始化训练步数计数器
+        # training step counter
         self.global_step = 0
 
         # parse shape_meta
@@ -140,7 +140,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
                                         use_pc_color=use_pc_color,
                                         pointnet_type=pointnet_type,)
 
-        # create model (same架构，但语义从噪声改为速度场)
+        # create model (same architecture as diffusion UNet, but predicts velocity field instead of noise)
         obs_feature_dim = obs_encoder.output_shape()
         input_dim = action_dim + obs_feature_dim
         global_cond_dim = None
@@ -165,7 +165,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
                     cond_predict_scale=cond_predict_scale
         )
 
-        # CurveFlow模型（按开关启用）
+        # CurveFlow module (enabled or disabled via flag)
         curveflow_model = None
         self.use_curveflow = use_curveflow
         if self.use_curveflow:
@@ -181,7 +181,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         # Flow Matching
         self.fm = ConditionalFlowMatcher(sigma=fm_sigma)
 
-        # 常用属性
+        # common attributes
         self.normalizer = LinearNormalizer()
         self.horizon = horizon
         self.obs_feature_dim = obs_feature_dim
@@ -191,7 +191,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         self.obs_as_global_cond = obs_as_global_cond
         self.kwargs = kwargs
 
-        # CFM/推理相关超参
+        # CFM / inference-related hyperparameters
         self.num_inference_steps = num_inference_steps
         self.t_discrete_steps = t_discrete_steps
         self.use_integer_time_embed = use_integer_time_embed
@@ -201,15 +201,13 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         self.x_t_noise_sigma0 = x_t_noise_sigma0
         self.min_t_epsilon = min_t_epsilon
 
-        # CurveFlow参数
+        # CurveFlow-related hyperparameters
         self.curveflow_lambda = curveflow_lambda
         self.curveflow_hidden_dim = curveflow_hidden_dim
         self.curveflow_delta_scale = curveflow_delta_scale
         self.curveflow_m_grid_points = curveflow_m_grid_points
 
-        # 测试曲率损失计算将在模型移动到设备后进行
-
-        # 掩码生成器（仅在 use_curveflow=False 的 FM 分支使用）
+        # mask generator (mainly used when CurveFlow is disabled, i.e. standard flow-matching branch)
         self.mask_generator = LowdimMaskGenerator(
             action_dim=action_dim,
             obs_dim=0 if obs_as_global_cond else obs_feature_dim,
@@ -220,43 +218,43 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
 
 
     def _compute_curvature_loss(self):
-        """计算曲率正则化损失 - 使用有限差分提高数值稳定性"""
+        """Compute curvature regularization loss using finite differences (for numerical stability)."""
         if (not hasattr(self, 'use_curveflow')) or (not self.use_curveflow):
             return torch.tensor(0.0, requires_grad=True, device=self.device if hasattr(self, 'device') else None)
         if (self.curveflow_lambda <= 0) or (self.curveflow_model is None):
             return torch.tensor(0.0, requires_grad=True)
 
-        # 获取设备
+        # get device
         device = next(self.curveflow_model.parameters()).device
         
-        # 创建时间网格 - 增加密度提高精度
-        M = max(100, self.curveflow_m_grid_points // 2)  # 减少计算量但保持精度
+        # create time grid - trade off efficiency and accuracy
+        M = max(100, self.curveflow_m_grid_points // 2)
         dt = 1.0 / M
         t_grid = torch.linspace(0, 1, M + 1, device=device).view(-1, 1)
         
-        # 计算系数
+        # evaluate coefficients on grid
         a_grid, b_grid = self.curveflow_model(t_grid)
         
-        # 使用有限差分计算导数，避免高阶自动微分
-        # 一阶导数
+        # use finite differences to compute derivatives; avoid higher-order autograd
+        # first-order derivatives
         dot_a = (a_grid[1:] - a_grid[:-1]) / dt
         dot_b = (b_grid[1:] - b_grid[:-1]) / dt
         
-        # 二阶导数
+        # second-order derivatives
         ddot_a = (dot_a[1:] - dot_a[:-1]) / dt
         ddot_b = (dot_b[1:] - dot_b[:-1]) / dt
         
-        # 计算曲率被积函数 (dot_a * ddot_b - dot_b * ddot_a)^2
-        # 注意：需要对齐长度，ddot_a 比 dot_a 短 1
+        # curvature integrand (dot_a * ddot_b - dot_b * ddot_a)^2
+        # note: need to align lengths since ddot_a is shorter than dot_a by 1
         min_len = min(len(dot_a) - 1, len(ddot_a))
         if min_len > 0:
             integrand = (dot_a[:min_len] * ddot_b[:min_len] - dot_b[:min_len] * ddot_a[:min_len]) ** 2
-            # 积分近似 (黎曼和)
+            # approximate integral via Riemann sum
             integral = torch.sum(integrand) * dt
         else:
             integral = torch.tensor(0.0, device=device, requires_grad=True)
         
-        # 添加数值稳定性检查
+        # numerical stability check
         if torch.isnan(integral) or torch.isinf(integral):
             integral = torch.tensor(0.0, device=device, requires_grad=True)
 
@@ -275,11 +273,11 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             generator=None,
             **kwargs
             ):
-        # 反向积分：t: 1 -> 0，dx/dt = -v_theta(x, t, cond)
+        # reverse-time integration: t: 1 -> 0, dx/dt = -v_theta(x, t, cond)
         device = condition_data.device
         dtype = condition_data.dtype
 
-        # 初始状态 x(t=1) = b(1) * N(0,1) （若无curveflow则退化为0.1*N）
+        # initial state x(t=1) = b(1) * N(0,1); fall back to 0.1 * N if CurveFlow is disabled
         x = torch.randn(size=condition_data.shape, dtype=dtype, device=device)
         if hasattr(self, 'curveflow_model') and self.curveflow_model is not None and getattr(self, 'use_curveflow', False):
             t1 = torch.ones(1, 1, device=device, dtype=dtype)
@@ -290,13 +288,13 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         else:
             x = x * 0.1
 
-        # 时间从 1→0 均匀离散（反向积分）
+        # discretize time uniformly from 1 to 0 (reverse integration)
         steps = max(2, int(self.num_inference_steps))
         ts = torch.linspace(1.0, 0.0, steps=steps, device=device)
         dt = 1.0 / (steps - 1)
 
         for i, s in enumerate(ts):
-            # 强制使用整数时间嵌入（1000步）
+            # force integer time embedding (1000 steps)
             Tsteps = 1000
             s_idx = torch.clamp((s * (Tsteps - 1)).long(), 0, Tsteps - 1)
             timestep_in = s_idx
@@ -309,10 +307,10 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
                            points_center=points_center,
                            est_quat=est_quat)
 
-            # 反向积分：x = x - v * dt
+            # reverse integration step: x = x - v * dt
             x = x - v * dt
 
-        # 与CFM一致：在条件位置对齐（通常为全零）
+        # enforce condition at masked locations (typically zeros in CFM)
         x[condition_mask] = condition_data[condition_mask]
         return x
 
@@ -355,7 +353,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         cond_data = torch.zeros(size=(B, T, Da), device=device, dtype=dtype)
         cond_mask = torch.zeros_like(cond_data, dtype=torch.bool)
 
-        # run sampling (ODE正向积分)
+        # run sampling (ODE integration)
         nsample = self.conditional_sample(
             cond_data, 
             cond_mask,
@@ -408,15 +406,15 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         # reshape back to B, Do
         global_cond = ret['final_feat'].reshape(batch_size, -1)  # [B, To*Do]
 
-        # CurveFlow / 标准Flow Matching 分支
-        # 采样时间
+        # CurveFlow / standard Flow Matching branch
+        # sample time
         t = torch.rand(batch_size, device=self.device)
         if self.min_t_epsilon is not None and self.min_t_epsilon > 0:
             eps = float(self.min_t_epsilon)
             t = t.clamp_(eps, 1.0 - eps)
 
         if self.use_curveflow:
-            # CurveFlow路径与目标
+            # CurveFlow path and target
             t_input = t.view(-1, 1).requires_grad_()
             a_t_scalar, b_t_scalar = self.curveflow_model(t_input)
 
@@ -448,16 +446,16 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             loss_mask = ~condition_mask
             x_t[condition_mask] = trajectory[condition_mask]
         else:
-            # 与 CFM 完全一致：从 x0 ~ N(0, x0_std) 到 x1=trajectory，由 fm 采样 (x_t, u_t)
+            # standard CFM: from x0 ~ N(0, x0_std) to x1 = trajectory, fm samples (x_t, u_t)
             x0 = torch.randn_like(trajectory) * self.x0_std
             x1 = trajectory
             _, x_t, u_t = self.fm.sample_location_and_conditional_flow(x0, x1, t)
-            # 掩码与条件注入
+            # apply mask and inject conditions
             condition_mask = self.mask_generator(trajectory.shape)
             loss_mask = ~condition_mask
             x_t[condition_mask] = trajectory[condition_mask]
 
-        # 5) 时间嵌入
+        # 5) time embedding
        
         if self.use_integer_time_embed:
             Tsteps = int(self.time_steps_for_embed)
@@ -467,7 +465,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             timestep_in = t * self.t_embed_scale
        
 
-        # 6) 速度场预测 
+        # 6) velocity field prediction
         v_pred = self.model(sample=x_t, 
                             timestep=timestep_in, 
                             local_cond=local_cond, 
@@ -476,7 +474,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
                             est_quat=ret['est_quat'])
 
        
-            # 与原先一致：MSE
+        # normalized L1 loss (similar spirit to MSE on scaled targets)
         per_elem = F.l1_loss(v_pred, u_t, reduction='none')
         v_scale = torch.std(u_t, dim=-1, keepdim=True).clamp(min=1e-6)
         per_elem = per_elem / v_scale
@@ -484,18 +482,16 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         fm_loss = reduce(per_elem, 'b ... -> b (...)', 'mean').mean()
        
 
-        # 8) 曲率正则化损失（仅在启用CurveFlow时生效）
+        # 8) curvature regularization loss (only active when CurveFlow is enabled)
         curvature_loss = self._compute_curvature_loss()
 
-        # 9) 总损失
+        # 9) total loss
         total_loss = fm_loss + curvature_loss
         
-        # 更新训练步数
+        # update global step counter
         self.global_step += 1
         
-        # 注意：梯度计算需要在backward()之后进行，这里只是准备调试信息
-
-        # 添加调试信息
+        # add debug information
         if self.global_step % 100 == 0:
             print(f"Step {self.global_step}:")
             print(f"  t range: [{t.min().item():.3f}, {t.max().item():.3f}]")
@@ -511,7 +507,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             print(f"  curvature_loss: {curvature_loss.item():.3f}")
             print(f"  total_loss: {total_loss.item():.3f}")
             
-            # 检查CurveFlow模型参数 
+            # inspect CurveFlow model parameters
             if self.use_curveflow:
                 total_params = sum(p.numel() for p in self.curveflow_model.parameters())
                 zero_params = sum(1 for p in self.curveflow_model.parameters() if torch.all(p == 0))

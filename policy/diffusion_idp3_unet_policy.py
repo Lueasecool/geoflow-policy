@@ -10,12 +10,12 @@ import copy
 import time
 import pytorch3d.ops as torch3d_ops
 
-from canonical_policy.model.common.module_attr_mixin import ModuleAttrMixin
-from canonical_policy.model.common.normalizer import LinearNormalizer
-from canonical_policy.model.diffusion.dp3_conditional_unet1d import ConditionalUnet1D
-from canonical_policy.model.diffusion.mask_generator import LowdimMaskGenerator
-from canonical_policy.common.pytorch_util import dict_apply
-from canonical_policy.model.vision.idp3_extractor import IDP3Encoder
+from model.common.module_attr_mixin import ModuleAttrMixin
+from model.common.normalizer import LinearNormalizer
+from model.diffusion.dp3_conditional_unet1d import ConditionalUnet1D
+from model.diffusion.mask_generator import LowdimMaskGenerator
+from common.pytorch_util import dict_apply
+from model.vision.idp3_extractor import IDP3Encoder
 
 class BasePolicy(ModuleAttrMixin):
     # init accepts keyword argument shape_meta, see config/task/*_image.yaml
