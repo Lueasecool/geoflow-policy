@@ -103,7 +103,7 @@ python workspace/train_curflow_canonical_workspace.py --config-name=train_curflo
 ### Key CurveFlow Parameters
 
 - `policy.use_curveflow`: Enable/disable CurveFlow (default: `true`)
-- `policy.curveflow_lambda`: Curvature regularization weight (default: `0.2`)
+- `policy.curveflow_lambda`: Curvature regularization weight (default: `0.001`)
 - `policy.curveflow_hidden_dim`: Hidden dimension for CurveFlow coefficient networks (default: `64`)
 - `policy.curveflow_delta_scale`: Scale factor for CurveFlow perturbations (default: `0.5`)
 - `policy.curveflow_m_grid_points`: Number of grid points for curvature computation (default: `1000`)
