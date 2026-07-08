@@ -34,7 +34,7 @@ from model.common.lr_scheduler import get_scheduler
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
-class TrainCurveFlowCanonicalWorkspace:
+class TrainGeoFlowCanonicalWorkspace:
     include_keys = ['global_step', 'epoch']
     exclude_keys = tuple()
 
@@ -59,19 +59,19 @@ class TrainCurveFlowCanonicalWorkspace:
             except: # minkowski engine could not be copied. recreate it
                 self.ema_model = hydra.utils.instantiate(cfg.policy)
 
-        # configure training state - include all model parameters (optionally with CurveFlow parameters)
+        # configure training state - include all model parameters (optionally with GeoFlow parameters)
         print(f"Model type: {type(self.model)}")
-        print(f"Has curveflow_model attr: {hasattr(self.model, 'curveflow_model')}")
-        print(f"use_curveflow: {getattr(self.model, 'use_curveflow', False)}")
+        print(f"Has geoflow_model attr: {hasattr(self.model, 'geoflow_model')}")
+        print(f"use_geoflow: {getattr(self.model, 'use_geoflow', False)}")
 
         all_params = list(self.model.parameters())
-        cf_module = getattr(self.model, 'curveflow_model', None)
-        if getattr(self.model, 'use_curveflow', False) and (cf_module is not None):
-            curveflow_params = list(cf_module.parameters())
-            all_params.extend(curveflow_params)
-            print(f"curveflow_model included with {len(curveflow_params)} parameters")
+        cf_module = getattr(self.model, 'geoflow_model', None)
+        if getattr(self.model, 'use_geoflow', False) and (cf_module is not None):
+            geoflow_params = list(cf_module.parameters())
+            all_params.extend(geoflow_params)
+            print(f"geoflow_model included with {len(geoflow_params)} parameters")
         else:
-            print("curveflow_model NOT included")
+            print("geoflow_model NOT included")
         self.optimizer = hydra.utils.instantiate(
             cfg.optimizer, params=all_params)
 
@@ -210,7 +210,7 @@ class TrainCurveFlowCanonicalWorkspace:
                     # compute gradient norm after backward()
                     if self.global_step % 100 == 0:
                         model_norm = 0
-                        curveflow_norm = 0
+                        geoflow_norm = 0
                         
                         # main model gradients
                         for p in self.model.parameters():
@@ -219,22 +219,22 @@ class TrainCurveFlowCanonicalWorkspace:
                                 model_norm += param_norm.item() ** 2
                         model_norm = model_norm ** (1. / 2)
                         
-                        # CurveFlow module gradients
-                        if hasattr(self.model, 'curveflow_model') and getattr(self.model, 'use_curveflow', False):
-                            for p in self.model.curveflow_model.parameters():
+                        # GeoFlow module gradients
+                        if hasattr(self.model, 'geoflow_model') and getattr(self.model, 'use_geoflow', False):
+                            for p in self.model.geoflow_model.parameters():
                                 if p.grad is not None:
                                     param_norm = p.grad.data.norm(2)
-                                    curveflow_norm += param_norm.item() ** 2
-                        curveflow_norm = curveflow_norm ** (1. / 2)
+                                    geoflow_norm += param_norm.item() ** 2
+                        geoflow_norm = geoflow_norm ** (1. / 2)
                         
-                        total_norm = (model_norm ** 2 + curveflow_norm ** 2) ** (1. / 2)
-                        print(f"  Gradient norm - Model: {model_norm:.6f}, CurveFlow: {curveflow_norm:.6f}, Total: {total_norm:.6f}")
+                        total_norm = (model_norm ** 2 + geoflow_norm ** 2) ** (1. / 2)
+                        print(f"  Gradient norm - Model: {model_norm:.6f}, GeoFlow: {geoflow_norm:.6f}, Total: {total_norm:.6f}")
                         
                         # apply gradient clipping if total norm is too large
                         if total_norm > 10.0:
                             all_params = list(self.model.parameters())
-                            if hasattr(self.model, 'curveflow_model') and getattr(self.model, 'use_curveflow', False):
-                                all_params.extend(list(self.model.curveflow_model.parameters()))
+                            if hasattr(self.model, 'geoflow_model') and getattr(self.model, 'use_geoflow', False):
+                                all_params.extend(list(self.model.geoflow_model.parameters()))
                             torch.nn.utils.clip_grad_norm_(all_params, max_norm=1.0)
                             print(f"  Applied gradient clipping (norm was {total_norm:.6f})")
                     
@@ -540,7 +540,7 @@ class TrainCurveFlowCanonicalWorkspace:
     config_path=str(pathlib.Path(__file__).parent.parent.joinpath('config'))
 )
 def main(cfg):
-    workspace = TrainCurveFlowCanonicalWorkspace(cfg)
+    workspace = TrainGeoFlowCanonicalWorkspace(cfg)
     workspace.run()
 
 if __name__ == "__main__":

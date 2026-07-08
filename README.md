@@ -1,4 +1,4 @@
-## Curvature-Guided Flow Matching via　SE(3)-Canonical Point Clouds for Robot　Imitation Learning
+
 
 Installation
 
@@ -11,8 +11,8 @@ Installation
 3. Clone this repo
 
    ```bash
-   git clone https://github.com/＊＊＊/curveflow-policy
-   cd curveflow-policy
+   git clone https://github.com/＊＊＊/geoflow-policy
+   cd geoflow-policy
    ```
 4. Install environment:
    Use Mambaforge (strongly recommended):
@@ -56,7 +56,7 @@ Installation
 ### Download Dataset
 
 Download dataset from MimicGen's hugging face: https://huggingface.co/datasets/amandlek/mimicgen_datasets/tree/main/core
-Make sure the dataset is kept under `/path/to/curveflow-policy/data/robomimic/datasets/[dataset]/[dataset].hdf5`
+Make sure the dataset is kept under `/path/to/geoflow-policy/data/robomimic/datasets/[dataset]/[dataset].hdf5`
 
 ### Generating Voxel and Point Cloud Observation
 
@@ -80,40 +80,40 @@ python scripts/robomimic_dataset_conversion.py -i data/robomimic/datasets/[datas
 python scripts/robomimic_dataset_conversion.py -i data/robomimic/datasets/stack_d1/stack_d1_voxel.hdf5 -o data/robomimic/datasets/stack_d1/stack_d1_voxel_abs.hdf5 -n 12
 ```
 
-## Training with CurveFlow Policy
+## Training with GeoFlow Policy
 
-To train CurveFlow Policy (with absolute pose control) in Stack D1 task:
+To train GeoFlow Policy (with absolute pose control) in Stack D1 task:
 
 ```bash
 # Make sure you have the voxel converted dataset with absolute action space from the previous step
 
 cd workspace
-python train_curflow_canonical_workspace.py --config-name=train_curflow_canonical task_name=stack_d1 n_demo=200 
+python train_geoflow_canonical_workspace.py --config-name=train_geoflow_canonical task_name=stack_d1 n_demo=200 
 
-# Adjust CurveFlow parameters
-python train_curflow_canonical_workspace.py --config-name=train_curflow_canonical task_name=stack_d1 n_demo=200 policy.curveflow_lambda=0.2 policy.use_curveflow=true
+# Adjust GeoFlow parameters
+python train_geoflow_canonical_workspace.py --config-name=train_geoflow_canonical task_name=stack_d1 n_demo=200 policy.geoflow_lambda=0.2 policy.use_geoflow=true
 ```
 
 Alternatively, you can run from the project root:
 
 ```bash
-python workspace/train_curflow_canonical_workspace.py --config-name=train_curflow_canonical task_name=stack_d1 n_demo=200
+python workspace/train_geoflow_canonical_workspace.py --config-name=train_geoflow_canonical task_name=stack_d1 n_demo=200
 ```
 
-### Key CurveFlow Parameters
+### Key GeoFlow Parameters
 
-- `policy.use_curveflow`: Enable/disable CurveFlow (default: `true`)
-- `policy.curveflow_lambda`: Curvature regularization weight (default: `0.001`)
-- `policy.curveflow_hidden_dim`: Hidden dimension for CurveFlow coefficient networks (default: `64`)
-- `policy.curveflow_delta_scale`: Scale factor for CurveFlow perturbations (default: `0.5`)
-- `policy.curveflow_m_grid_points`: Number of grid points for curvature computation (default: `1000`)
+- `policy.use_geoflow`: Enable/disable GeoFlow (default: `true`)
+- `policy.geoflow_lambda`: Curvature regularization weight (default: `0.001`)
+- `policy.geoflow_hidden_dim`: Hidden dimension for GeoFlow coefficient networks (default: `64`)
+- `policy.geoflow_delta_scale`: Scale factor for GeoFlow perturbations (default: `0.5`)
+- `policy.geoflow_m_grid_points`: Number of grid points for curvature computation (default: `1000`)
 
 ## Citation
 
 If you find this work helpful, please cite:
 
 ```bash
-@article{curveflow-policy,
+@article{geoflow-policy,
     title={Curvature-Guided Flow Matching via　SE(3)-Canonical Point Clouds for Robot　Imitation Learning},
     year={2026}
 }

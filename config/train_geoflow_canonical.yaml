@@ -2,8 +2,8 @@ defaults:
   - _self_
   - task: mimicgen_pc_abs
 
-name: train_curveflow
-_target_: workspace.train_curveflow_workspace.TrainCurveFlowWorkspace
+name: train_geoflow
+_target_: workspace.train_geoflow_canonical_workspace.TrainGeoFlowCanonicalWorkspace
 
 shape_meta: ${task.shape_meta}
 exp_name: "debug"
@@ -21,9 +21,9 @@ dataset_target: dataset.robomimic_replay_point_cloud_dataset.RobomimicReplayPoin
 dataset_path: data/robomimic/datasets/${task_name}/${task_name}_voxel_abs.hdf5
 
 policy:
-  _target_: policy.curveflow_unet_policy.CurveFlowUNetPolicy
+  _target_: policy.geoflow_canonical_unet_policy.GeoFlowCanonicalUNetPolicy
   use_point_crop: true
-  use_curveflow: true
+  use_geoflow: true
   
   diffusion_step_embed_dim: 128
   down_dims:
@@ -64,11 +64,11 @@ policy:
     rot_hidden_dim: 48
     rot_layers: 4
 
-  # CurveFlow parameters
-  curveflow_lambda: 0.2  # 禁用曲率正则化
-  curveflow_hidden_dim: 64  # 减小网络复杂度
-  curveflow_delta_scale: 0.5  # 禁用CurveFlow扰动
-  curveflow_m_grid_points: 1000  # 最小网格点数
+  # GeoFlow parameters
+  geoflow_lambda: 0.2  # 禁用曲率正则化
+  geoflow_hidden_dim: 64  # 减小网络复杂度
+  geoflow_delta_scale: 0.5  # 禁用GeoFlow扰动
+  geoflow_m_grid_points: 1000  # 最小网格点数
   flow_matching_sigma: 0.02
 
 ema:
@@ -119,10 +119,10 @@ training:
   tqdm_interval_sec: 1.0
 
 logging:
-  project: curveflow_${task_name}
+  project: geoflow_${task_name}
   resume: true
   mode: online
-  name: curflow_${policy.curveflow_lambda}_${n_demo}_curflow  
+  name: geoflow_${policy.geoflow_lambda}_${n_demo}_geoflow  
   tags: ["${name}", "${task_name}", "${exp_name}"]
   id: null
   group: null

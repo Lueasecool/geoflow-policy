@@ -23,8 +23,8 @@ except Exception as e:
     raise ImportError("Please install torchcfm to use CFMCanonicalUNetPolicy. Error: {}".format(e))
 
 
-class CurveFlowCoefficientNet(nn.Module):
-    """Neural network that directly parameterizes CurveFlow coefficients."""
+class GeoFlowCoefficientNet(nn.Module):
+    """Neural network that directly parameterizes GeoFlow coefficients."""
 
     def __init__(self, hidden_dim=64, output_activation="tanh"):
         super().__init__()
@@ -53,17 +53,17 @@ class CurveFlowCoefficientNet(nn.Module):
             return y
 
 
-class CurveFlow(nn.Module):
+class GeoFlow(nn.Module):
     """
-    CurveFlow trajectory: z_t = a_phi(t) * x_0 + b_psi(t) * epsilon.
+    GeoFlow trajectory: z_t = a_phi(t) * x_0 + b_psi(t) * epsilon.
     The coefficients a_phi(t) and b_psi(t) are a linear baseline plus bounded nonlinear perturbations.
     """
 
     def __init__(self, hidden_dim=64, delta_scale=0.5):
         super().__init__()
         # directly parameterize the coefficient functions (tanh output, zero-centered and symmetric)
-        self.a_phi_net = CurveFlowCoefficientNet(hidden_dim, output_activation="tanh")
-        self.b_psi_net = CurveFlowCoefficientNet(hidden_dim, output_activation="tanh")
+        self.a_phi_net = GeoFlowCoefficientNet(hidden_dim, output_activation="tanh")
+        self.b_psi_net = GeoFlowCoefficientNet(hidden_dim, output_activation="tanh")
         self.delta_scale = delta_scale
 
     def a_phi(self, t):
@@ -81,7 +81,7 @@ class CurveFlow(nn.Module):
         return self.a_phi(t), self.b_psi(t)
 
 
-class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
+class GeoFlowCanonicalUNetPolicy(BaseImagePolicy):
     def __init__(self, 
             shape_meta: dict,
             horizon, 
@@ -108,12 +108,12 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             x_t_noise_sigma0=0.05,
             min_t_epsilon=0.01,
             # Switch
-            use_curveflow=True,
-            # CurveFlow parameters
-            curveflow_lambda=0.1,
-            curveflow_hidden_dim=64,
-            curveflow_delta_scale=0.5,
-            curveflow_m_grid_points=1000,
+            use_geoflow=True,
+            # GeoFlow parameters
+            geoflow_lambda=0.1,
+            geoflow_hidden_dim=64,
+            geoflow_delta_scale=0.5,
+            geoflow_m_grid_points=1000,
             # parameters passed to step
             **kwargs):
         super().__init__()
@@ -151,7 +151,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         self.use_pc_color = use_pc_color
         self.pointnet_type = pointnet_type
         
-        cprint(f"[CurveFlowCanonicalUNetPolicy] pointnet_type: {self.pointnet_type}", "yellow")
+        cprint(f"[GeoFlowCanonicalUNetPolicy] pointnet_type: {self.pointnet_type}", "yellow")
 
         model = CanonicalConditionalUnet1D(
                     input_dim=input_dim,
@@ -165,18 +165,18 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
                     cond_predict_scale=cond_predict_scale
         )
 
-        # CurveFlow module (enabled or disabled via flag)
-        curveflow_model = None
-        self.use_curveflow = use_curveflow
-        if self.use_curveflow:
-            curveflow_model = CurveFlow(
-                hidden_dim=curveflow_hidden_dim,
-                delta_scale=curveflow_delta_scale
+        # GeoFlow module (enabled or disabled via flag)
+        geoflow_model = None
+        self.use_geoflow = use_geoflow
+        if self.use_geoflow:
+            geoflow_model = GeoFlow(
+                hidden_dim=geoflow_hidden_dim,
+                delta_scale=geoflow_delta_scale
             )
 
         self.obs_encoder = obs_encoder
         self.model = model
-        self.curveflow_model = curveflow_model
+        self.geoflow_model = geoflow_model
         
         # Flow Matching
         self.fm = ConditionalFlowMatcher(sigma=fm_sigma)
@@ -201,13 +201,13 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         self.x_t_noise_sigma0 = x_t_noise_sigma0
         self.min_t_epsilon = min_t_epsilon
 
-        # CurveFlow-related hyperparameters
-        self.curveflow_lambda = curveflow_lambda
-        self.curveflow_hidden_dim = curveflow_hidden_dim
-        self.curveflow_delta_scale = curveflow_delta_scale
-        self.curveflow_m_grid_points = curveflow_m_grid_points
+        # GeoFlow-related hyperparameters
+        self.geoflow_lambda = geoflow_lambda
+        self.geoflow_hidden_dim = geoflow_hidden_dim
+        self.geoflow_delta_scale = geoflow_delta_scale
+        self.geoflow_m_grid_points = geoflow_m_grid_points
 
-        # mask generator (mainly used when CurveFlow is disabled, i.e. standard flow-matching branch)
+        # mask generator (mainly used when GeoFlow is disabled, i.e. standard flow-matching branch)
         self.mask_generator = LowdimMaskGenerator(
             action_dim=action_dim,
             obs_dim=0 if obs_as_global_cond else obs_feature_dim,
@@ -219,21 +219,21 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
 
     def _compute_curvature_loss(self):
         """Compute curvature regularization loss using finite differences (for numerical stability)."""
-        if (not hasattr(self, 'use_curveflow')) or (not self.use_curveflow):
+        if (not hasattr(self, 'use_geoflow')) or (not self.use_geoflow):
             return torch.tensor(0.0, requires_grad=True, device=self.device if hasattr(self, 'device') else None)
-        if (self.curveflow_lambda <= 0) or (self.curveflow_model is None):
+        if (self.geoflow_lambda <= 0) or (self.geoflow_model is None):
             return torch.tensor(0.0, requires_grad=True)
 
         # get device
-        device = next(self.curveflow_model.parameters()).device
+        device = next(self.geoflow_model.parameters()).device
         
         # create time grid - trade off efficiency and accuracy
-        M = max(100, self.curveflow_m_grid_points // 2)
+        M = max(100, self.geoflow_m_grid_points // 2)
         dt = 1.0 / M
         t_grid = torch.linspace(0, 1, M + 1, device=device).view(-1, 1)
         
         # evaluate coefficients on grid
-        a_grid, b_grid = self.curveflow_model(t_grid)
+        a_grid, b_grid = self.geoflow_model(t_grid)
         
         # use finite differences to compute derivatives; avoid higher-order autograd
         # first-order derivatives
@@ -258,7 +258,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         if torch.isnan(integral) or torch.isinf(integral):
             integral = torch.tensor(0.0, device=device, requires_grad=True)
 
-        return self.curveflow_lambda * integral
+        return self.geoflow_lambda * integral
 
     # ========= inference  ============
     def conditional_sample(self, 
@@ -277,12 +277,12 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         device = condition_data.device
         dtype = condition_data.dtype
 
-        # initial state x(t=1) = b(1) * N(0,1); fall back to 0.1 * N if CurveFlow is disabled
+        # initial state x(t=1) = b(1) * N(0,1); fall back to 0.1 * N if GeoFlow is disabled
         x = torch.randn(size=condition_data.shape, dtype=dtype, device=device)
-        if hasattr(self, 'curveflow_model') and self.curveflow_model is not None and getattr(self, 'use_curveflow', False):
+        if hasattr(self, 'geoflow_model') and self.geoflow_model is not None and getattr(self, 'use_geoflow', False):
             t1 = torch.ones(1, 1, device=device, dtype=dtype)
             with torch.no_grad():
-                _, b1 = self.curveflow_model(t1)
+                _, b1 = self.geoflow_model(t1)
             b1 = b1.view(1, 1, 1)
             x = x * b1*0.1
         else:
@@ -406,17 +406,17 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         # reshape back to B, Do
         global_cond = ret['final_feat'].reshape(batch_size, -1)  # [B, To*Do]
 
-        # CurveFlow / standard Flow Matching branch
+        # GeoFlow / standard Flow Matching branch
         # sample time
         t = torch.rand(batch_size, device=self.device)
         if self.min_t_epsilon is not None and self.min_t_epsilon > 0:
             eps = float(self.min_t_epsilon)
             t = t.clamp_(eps, 1.0 - eps)
 
-        if self.use_curveflow:
-            # CurveFlow path and target
+        if self.use_geoflow:
+            # GeoFlow path and target
             t_input = t.view(-1, 1).requires_grad_()
-            a_t_scalar, b_t_scalar = self.curveflow_model(t_input)
+            a_t_scalar, b_t_scalar = self.geoflow_model(t_input)
 
             grad_outputs = torch.ones_like(a_t_scalar)
             dot_a_val = torch.autograd.grad(
@@ -482,7 +482,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         fm_loss = reduce(per_elem, 'b ... -> b (...)', 'mean').mean()
        
 
-        # 8) curvature regularization loss (only active when CurveFlow is enabled)
+        # 8) curvature regularization loss (only active when GeoFlow is enabled)
         curvature_loss = self._compute_curvature_loss()
 
         # 9) total loss
@@ -495,7 +495,7 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
         if self.global_step % 100 == 0:
             print(f"Step {self.global_step}:")
             print(f"  t range: [{t.min().item():.3f}, {t.max().item():.3f}]")
-            if self.use_curveflow:
+            if self.use_geoflow:
                 print(f"  a_t range: [{a_t.min().item():.3f}, {a_t.max().item():.3f}]")
                 print(f"  b_t range: [{b_t.min().item():.3f}, {b_t.max().item():.3f}]")
                 print(f"  dot_a range: [{dot_a.min().item():.3f}, {dot_a.max().item():.3f}]")
@@ -507,12 +507,12 @@ class CurveFlowCanonicalUNetPolicy(BaseImagePolicy):
             print(f"  curvature_loss: {curvature_loss.item():.3f}")
             print(f"  total_loss: {total_loss.item():.3f}")
             
-            # inspect CurveFlow model parameters
-            if self.use_curveflow:
-                total_params = sum(p.numel() for p in self.curveflow_model.parameters())
-                zero_params = sum(1 for p in self.curveflow_model.parameters() if torch.all(p == 0))
-                param_norm = sum(p.norm().item() for p in self.curveflow_model.parameters())
-                print(f"  CurveFlow params: {total_params}, zero params: {zero_params}, param norm: {param_norm:.6f}")
+            # inspect GeoFlow model parameters
+            if self.use_geoflow:
+                total_params = sum(p.numel() for p in self.geoflow_model.parameters())
+                zero_params = sum(1 for p in self.geoflow_model.parameters() if torch.all(p == 0))
+                param_norm = sum(p.norm().item() for p in self.geoflow_model.parameters())
+                print(f"  GeoFlow params: {total_params}, zero params: {zero_params}, param norm: {param_norm:.6f}")
 
         loss_dict = {
             'bc_loss': total_loss.item(),
