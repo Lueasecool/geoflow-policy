@@ -114,7 +114,7 @@ If you find this work helpful, please cite:
 
 ```bash
 @article{geoflow-policy,
-    title={Curvature-Guided Flow Matching via　SE(3)-Canonical Point Clouds for Robot　Imitation Learning},
+    title={Geoflow: Geometry-Conditioned Flow Matching via Canonical Point  Clouds for SE(3)-Consistent Robotic Imitation Learning},
     year={2026}
 }
 ```
