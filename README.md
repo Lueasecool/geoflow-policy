@@ -114,7 +114,7 @@ If you find this work helpful, please cite:
 
 ```bash
 @article{geoflow-policy,
-    title={Geoflow: Geometry-Conditioned Flow Matching via Canonical Point  Clouds for SE(3)-Consistent Robotic Imitation Learning},
+    title={Geoflow: Geometry-Conditioned Flow Matching With Spatio-Temporal Canonical Representations for Robotic Manipulation},
     year={2026}
 }
 ```
